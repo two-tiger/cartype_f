@@ -9,6 +9,7 @@ import torchvision.transforms as transforms
 from torch.optim import lr_scheduler
 from src_files.helper_functions.helper_functions import mAP, CocoDetection, CutoutPIL, ModelEma, \
     add_weight_decay
+from src_files.helper_functions.dataset import CarTypeDataset
 from src_files.models import create_model
 from src_files.loss_functions.losses import AsymmetricLoss
 from randaugment import RandAugment
@@ -47,30 +48,32 @@ def main():
     print('done')
 
     # COCO Data loading datapath : /home/MSCOCO_2014/
-    instances_path_val = os.path.join(args.data, 'annotations/instances_val2014.json')
-    instances_path_train = os.path.join(args.data, 'annotations/instances_train2014.json')
+    #instances_path_val = os.path.join(args.data, 'annotations/instances_val2014.json')
+    #instances_path_train = os.path.join(args.data, 'annotations/instances_train2014.json')
     #data_path_val = args.data
     #data_path_train = args.data
-    data_path_val = f'{args.data}/val2014'  # args.data
-    data_path_train = f'{args.data}/train2014'  # args.data
-    val_dataset = CocoDetection(data_path_val,
-                                instances_path_val,
-                                transforms.Compose([
-                                    transforms.Resize((args.image_size, args.image_size)),
-                                    transforms.ToTensor(),
-                                    # normalize, # no need, toTensor does normalization
-                                ]))
-    train_dataset = CocoDetection(data_path_train,
-                                  instances_path_train,
-                                  transforms.Compose([
-                                      transforms.Resize((args.image_size, args.image_size)),
-                                      CutoutPIL(cutout_factor=0.5),
-                                      RandAugment(),
-                                      transforms.ToTensor(),
-                                      # normalize,
-                                  ]))
-    print("len(val_dataset)): ", len(val_dataset))
-    print("len(train_dataset)): ", len(train_dataset))
+    #data_path_val = f'{args.data}/val2014'  # args.data
+    #data_path_train = f'{args.data}/train2014'  # args.data
+    # val_dataset = CocoDetection(data_path_val,
+    #                             instances_path_val,
+    #                             transforms.Compose([
+    #                                 transforms.Resize((args.image_size, args.image_size)),
+    #                                 transforms.ToTensor(),
+    #                                 # normalize, # no need, toTensor does normalization
+    #                             ]))
+    # train_dataset = CocoDetection(data_path_train,
+    #                               instances_path_train,
+    #                               transforms.Compose([
+    #                                   transforms.Resize((args.image_size, args.image_size)),
+    #                                   CutoutPIL(cutout_factor=0.5),
+    #                                   RandAugment(),
+    #                                   transforms.ToTensor(),
+    #                                   # normalize,
+    #                               ]))
+    # print("len(val_dataset)): ", len(val_dataset))
+    # print("len(train_dataset)): ", len(train_dataset))
+    train_dataset = CarTypeDataset('train', (args.image_size, args.image_size))
+    val_dataset = CarTypeDataset('val' , (args.image_size, args.image_size))
 
     # Pytorch Data loader
     train_loader = torch.utils.data.DataLoader(
@@ -89,7 +92,7 @@ def train_multi_label_coco(model, train_loader, val_loader, lr):
     ema = ModelEma(model, 0.9997)  # 0.9997^641=0.82
 
     # set optimizer
-    Epochs = 40
+    Epochs = 60
     weight_decay = 1e-4
     criterion = AsymmetricLoss(gamma_neg=4, gamma_pos=0, clip=0.05, disable_torch_grad_focal_loss=True)
     parameters = add_weight_decay(model, weight_decay)

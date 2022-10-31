@@ -129,6 +129,9 @@ class CocoDetection(datasets.coco.CocoDetection):
         if self.target_transform is not None:
             target = self.target_transform(target)
         return img, target
+    
+    
+
 
 
 class ModelEma(torch.nn.Module):
